@@ -37,6 +37,13 @@ jobs:
       - name: Create build directory
         run: mkdir -p build
 
+      # フォント等のアセット取り込みと、class_name のグローバルクラス一覧(.godot/)を
+      # エクスポート前に生成させる。クリーンなCIには .godot/ が無いため明示的に走らせる。
+      - name: Import assets (headless)
+        run: |
+          cd game
+          godot --headless --import || true
+
       - name: Export Web build (headless)
         run: |
           cd game

@@ -1,0 +1,317 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/ui/game_screen.gd" id="1_game"]
+[ext_resource type="Script" path="res://src/ui/factory_view.gd" id="2_view"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_result"]
+bg_color = Color(0.101961, 0.113725, 0.141176, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.298039, 0.333333, 0.4, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="GameScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_game")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Root" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TopBar" type="HBoxContainer" parent="Margin/Root"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="StageLabel" type="Label" parent="Margin/Root/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.87451, 0.909804, 0.960784, 1)
+theme_override_font_sizes/font_size = 20
+text = "ステージ"
+
+[node name="Spacer" type="Control" parent="Margin/Root/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GoalLabel" type="Label" parent="Margin/Root/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "目標"
+
+[node name="PartsLabel" type="Label" parent="Margin/Root/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.643137, 0.686275, 0.741176, 1)
+theme_override_font_sizes/font_size = 16
+text = "パーツ 0"
+
+[node name="TimeLabel" type="Label" parent="Margin/Root/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.823529, 0.290196, 1)
+theme_override_font_sizes/font_size = 20
+text = "TIME 0:00.00"
+
+[node name="BestLabel" type="Label" parent="Margin/Root/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.643137, 0.686275, 0.741176, 1)
+theme_override_font_sizes/font_size = 16
+text = "ベスト --:--.--"
+
+[node name="Body" type="HBoxContainer" parent="Margin/Root"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="ViewPanel" type="PanelContainer" parent="Margin/Root/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FactoryView" type="Control" parent="Margin/Root/Body/ViewPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_view")
+
+[node name="Side" type="PanelContainer" parent="Margin/Root/Body"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+
+[node name="SideMargin" type="MarginContainer" parent="Margin/Root/Body/Side"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="SideBox" type="VBoxContainer" parent="Margin/Root/Body/Side/SideMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PaletteTitle" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.87451, 0.909804, 0.960784, 1)
+theme_override_font_sizes/font_size = 16
+text = "パーツ"
+
+[node name="PaletteList" type="VBoxContainer" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="ToolRow" type="HBoxContainer" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="RotateButton" type="Button" parent="Margin/Root/Body/Side/SideMargin/SideBox/ToolRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+text = "回転 (R)"
+
+[node name="EraseButton" type="Button" parent="Margin/Root/Body/Side/SideMargin/SideBox/ToolRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+toggle_mode = true
+text = "撤去 (X)"
+
+[node name="Separator1" type="HSeparator" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+layout_mode = 2
+
+[node name="InfoLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.780392, 0.819608, 0.870588, 1)
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+
+[node name="Separator2" type="HSeparator" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+layout_mode = 2
+
+[node name="HintLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.588235, 0.741176, 0.870588, 1)
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+
+[node name="ParLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.501961, 0.545098, 0.6, 1)
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+
+[node name="HelpLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_colors/font_color = Color(0.501961, 0.545098, 0.6, 1)
+theme_override_font_sizes/font_size = 12
+text = "左ドラッグ:設置
+右ドラッグ:撤去
+1〜9:パーツ選択 / R:回転
+Space:稼働開始・一時停止
+Esc:ステージ選択へ"
+autowrap_mode = 3
+
+[node name="BottomBar" type="HBoxContainer" parent="Margin/Root"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StartButton" type="Button" parent="Margin/Root/BottomBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 36)
+layout_mode = 2
+focus_mode = 0
+text = "稼働開始"
+
+[node name="ResetButton" type="Button" parent="Margin/Root/BottomBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 36)
+layout_mode = 2
+focus_mode = 0
+text = "リセット"
+
+[node name="ClearButton" type="Button" parent="Margin/Root/BottomBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 36)
+layout_mode = 2
+focus_mode = 0
+text = "全撤去"
+
+[node name="BottomSpacer" type="Control" parent="Margin/Root/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BackButton" type="Button" parent="Margin/Root/BottomBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 36)
+layout_mode = 2
+focus_mode = 0
+text = "ステージ選択へ"
+
+[node name="ResultLayer" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="ResultLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Center" type="CenterContainer" parent="ResultLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResultPanel" type="PanelContainer" parent="ResultLayer/Center"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_result")
+
+[node name="ResultMargin" type="MarginContainer" parent="ResultLayer/Center/ResultPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 22
+
+[node name="ResultBox" type="VBoxContainer" parent="ResultLayer/Center/ResultPanel/ResultMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ResultTitle" type="Label" parent="ResultLayer/Center/ResultPanel/ResultMargin/ResultBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.87451, 0.909804, 0.960784, 1)
+theme_override_font_sizes/font_size = 30
+text = "クリア!"
+horizontal_alignment = 1
+
+[node name="ResultRank" type="Label" parent="ResultLayer/Center/ResultPanel/ResultMargin/ResultBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "GOLD"
+horizontal_alignment = 1
+
+[node name="ResultTime" type="Label" parent="ResultLayer/Center/ResultPanel/ResultMargin/ResultBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "タイム  0:00.00"
+horizontal_alignment = 1
+
+[node name="ResultBest" type="Label" parent="ResultLayer/Center/ResultPanel/ResultMargin/ResultBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.643137, 0.686275, 0.741176, 1)
+theme_override_font_sizes/font_size = 14
+text = "ベスト --:--.--"
+horizontal_alignment = 1
+
+[node name="ResultParts" type="Label" parent="ResultLayer/Center/ResultPanel/ResultMargin/ResultBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.643137, 0.686275, 0.741176, 1)
+theme_override_font_sizes/font_size = 14
+text = "使用パーツ 0 個"
+horizontal_alignment = 1
+
+[node name="ResultButtons" type="HBoxContainer" parent="ResultLayer/Center/ResultPanel/ResultMargin/ResultBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="RetryButton" type="Button" parent="ResultLayer/Center/ResultPanel/ResultMargin/ResultBox/ResultButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 38)
+layout_mode = 2
+focus_mode = 0
+text = "もう一度"
+
+[node name="ToSelectButton" type="Button" parent="ResultLayer/Center/ResultPanel/ResultMargin/ResultBox/ResultButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 38)
+layout_mode = 2
+focus_mode = 0
+text = "ステージ選択へ"
