@@ -123,15 +123,90 @@ func _draw_building(cell) -> void:
 			)
 			draw_rect(bar, Color("ffd24a"), true)
 
+	elif kind == Defs.Kind.POWER_SOURCE:
+		_draw_water_wheel(cell, rect)
+	elif kind == Defs.Kind.SHAFT:
+		_draw_shaft(cell)
+
 	# 矢印は出口側に寄せて描く。中央を空けておかないとラベルや流れるアイテムと重なる。
-	if kind != Defs.Kind.SINK:
+	# シャフトと動力源は向きを持たないので描かない。
+	if _has_direction(kind):
 		_draw_edge_arrow(cell.pos, cell.dir, Color(1, 1, 1, 0.6))
 	if kind == Defs.Kind.SPLITTER:
 		_draw_edge_arrow(cell.pos, (cell.dir + 1) % 4, Color(1, 1, 1, 0.4))
+	if kind == Defs.Kind.GEARBOX:
+		# ラベルと重ならないよう左上の隅に寄せる。
+		_draw_spinner(cell.pos, rect.position + Vector2(_cell_size * 0.2, _cell_size * 0.2), _cell_size * 0.12)
 
 	var label: String = cell.def.get("short", "")
 	if label != "":
 		_draw_centered_text(rect.get_center() + Vector2(0.0, -_cell_size * 0.02), label)
+
+	if kind == Defs.Kind.MACHINE and factory.power_enabled:
+		_draw_power_state(cell, rect)
+
+
+static func _has_direction(kind: int) -> bool:
+	return (
+		kind != Defs.Kind.SINK and kind != Defs.Kind.POWER_SOURCE and kind != Defs.Kind.SHAFT
+	)
+
+
+## 動力源。回転しているのが見えるように輪と輻を回す。
+func _draw_water_wheel(cell, rect: Rect2) -> void:
+	var center := rect.get_center()
+	draw_arc(center, _cell_size * 0.34, 0.0, TAU, 24, Color(0.72, 0.86, 1.0, 0.55), 2.0)
+	_draw_spinner(cell.pos, center, _cell_size * 0.3, 6)
+
+
+## シャフトは繋がっている隣のマスへ線を引く。動力網の形がそのまま見えるようにする。
+func _draw_shaft(cell) -> void:
+	var center := _cell_center(cell.pos)
+	var color := Color(0.78, 0.75, 0.62, 0.9)
+	var width := maxf(_cell_size * 0.09, 2.0)
+	for i in Defs.DIR_VECTORS.size():
+		var step: Vector2i = Defs.DIR_VECTORS[i]
+		var neighbour = factory.cell_at(cell.pos + step)
+		if neighbour == null or not PowerGrid.conducts(neighbour):
+			continue
+		draw_line(center, center + Vector2(step) * _cell_size * 0.5, color, width)
+	_draw_spinner(cell.pos, center, _cell_size * 0.17)
+
+
+## 機械の動力状態。止まっているなら赤く伏せ、等速でなければ倍率を出す。
+func _draw_power_state(cell, rect: Rect2) -> void:
+	var rpm: float = factory.power.rpm_at(cell.pos)
+	if rpm <= 0.0:
+		draw_rect(rect, Color(0.9, 0.25, 0.25, 0.3), true)
+		draw_rect(rect, Color(1.0, 0.4, 0.4, 0.9), false, 2.0)
+		return
+	if is_equal_approx(rpm, 1.0):
+		return
+	var text := Defs.format_ratio(rpm)
+	var at := rect.position + Vector2(_cell_size * 0.08, rect.size.y - _cell_size * 0.1)
+	_draw_small_text(at, text, Color("ffd24a"))
+
+
+## 回転しているものの表現。回転数に比例して回る(止まっていれば赤く静止)。
+func _draw_spinner(pos: Vector2i, center: Vector2, radius: float, spokes := 4) -> void:
+	var rpm: float = factory.power.rpm_at(pos) if factory.power_enabled else 1.0
+	var color := Color(1, 1, 1, 0.8) if rpm > 0.0 else Color(1.0, 0.45, 0.4, 0.85)
+	var angle: float = factory.elapsed * rpm * PI
+	draw_circle(center, radius * 0.4, color)
+	for i in spokes:
+		var a: float = angle + TAU * i / spokes
+		draw_line(
+			center, center + Vector2(cos(a), sin(a)) * radius, color, maxf(radius * 0.26, 1.5)
+		)
+
+
+func _draw_small_text(at: Vector2, text: String, color: Color) -> void:
+	var font := get_theme_default_font()
+	if font == null:
+		return
+	draw_string(
+		font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, int(maxf(_cell_size * 0.24, 8.0)), color
+	)
 
 
 ## ベルト上を流れるアイテムと、機械が抱えている素材を描く。
@@ -180,7 +255,7 @@ func _draw_ghost() -> void:
 	tint.a = 0.45
 	draw_rect(rect, tint, true)
 	draw_rect(rect, Color(1, 0.4, 0.4, 0.9) if blocked else Color(1, 1, 1, 0.7), false, 2.0)
-	if not blocked:
+	if not blocked and _has_direction(int(def.kind)):
 		_draw_edge_arrow(_hover, ghost_dir, Color(1, 1, 1, 0.85))
 
 

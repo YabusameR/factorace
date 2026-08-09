@@ -107,33 +107,38 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="SideBox" type="VBoxContainer" parent="Margin/Root/Body/Side/SideMargin"]
+[node name="SideScroll" type="ScrollContainer" parent="Margin/Root/Body/Side/SideMargin"]
 layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="SideBox" type="VBoxContainer" parent="Margin/Root/Body/Side/SideMargin/SideScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="PaletteTitle" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+[node name="PaletteTitle" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.87451, 0.909804, 0.960784, 1)
 theme_override_font_sizes/font_size = 16
 text = "パーツ"
 
-[node name="PaletteList" type="VBoxContainer" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+[node name="PaletteList" type="VBoxContainer" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="ToolRow" type="HBoxContainer" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+[node name="ToolRow" type="HBoxContainer" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="RotateButton" type="Button" parent="Margin/Root/Body/Side/SideMargin/SideBox/ToolRow"]
+[node name="RotateButton" type="Button" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox/ToolRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 focus_mode = 0
 text = "回転 (R)"
 
-[node name="EraseButton" type="Button" parent="Margin/Root/Body/Side/SideMargin/SideBox/ToolRow"]
+[node name="EraseButton" type="Button" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox/ToolRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -141,36 +146,42 @@ focus_mode = 0
 toggle_mode = true
 text = "撤去 (X)"
 
-[node name="Separator1" type="HSeparator" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+[node name="Separator1" type="HSeparator" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
 layout_mode = 2
 
-[node name="InfoLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+[node name="PowerLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.858824, 1, 1)
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+
+[node name="InfoLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.780392, 0.819608, 0.870588, 1)
 theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
 
-[node name="Separator2" type="HSeparator" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+[node name="Separator2" type="HSeparator" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
 layout_mode = 2
 
-[node name="HintLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+[node name="HintLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.588235, 0.741176, 0.870588, 1)
 theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
 
-[node name="ParLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+[node name="ParLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.501961, 0.545098, 0.6, 1)
 theme_override_font_sizes/font_size = 12
 autowrap_mode = 3
 
-[node name="HelpLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideBox"]
+[node name="HelpLabel" type="Label" parent="Margin/Root/Body/Side/SideMargin/SideScroll/SideBox"]
 layout_mode = 2
-size_flags_vertical = 10
 theme_override_colors/font_color = Color(0.501961, 0.545098, 0.6, 1)
 theme_override_font_sizes/font_size = 12
 text = "左ドラッグ:設置

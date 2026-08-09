@@ -31,6 +31,7 @@ var _palette_buttons: Array = []
 @onready var _best_label: Label = %BestLabel
 @onready var _palette_list: VBoxContainer = %PaletteList
 @onready var _info_label: Label = %InfoLabel
+@onready var _power_label: Label = %PowerLabel
 @onready var _start_button: Button = %StartButton
 @onready var _erase_button: Button = %EraseButton
 @onready var _result_layer: Control = %ResultLayer
@@ -63,6 +64,7 @@ func _ready() -> void:
 	%ToSelectButton.pressed.connect(func() -> void: exit_requested.emit())
 
 	_build_palette()
+	_power_label.visible = _factory.power_enabled
 	_result_layer.visible = false
 	_refresh_best_label()
 	_update_hud()
@@ -225,6 +227,25 @@ func _update_hud() -> void:
 	]
 	_parts_label.text = "パーツ %d" % _factory.part_count()
 	_time_label.text = "TIME %s" % SaveData.format_time(_factory.elapsed)
+	if _factory.power_enabled:
+		_update_power_label()
+
+
+## 動力の収支。過負荷や回転数の矛盾は、稼働前に気づけるようここで出す。
+func _update_power_label() -> void:
+	var power: Dictionary = _factory.power.summary()
+	var lines := PackedStringArray(
+		["動力  消費 %.1f / 供給 %.1f" % [float(power.demand), float(power.capacity)]]
+	)
+	var color := Color(0.72, 0.86, 1.0)
+	if bool(power.conflict):
+		lines.append("回転数が矛盾している。増速機・減速機の向きを見直そう。")
+		color = Color(1.0, 0.55, 0.45)
+	elif bool(power.overstressed):
+		lines.append("過負荷。この系統の機械はすべて止まる。")
+		color = Color(1.0, 0.55, 0.45)
+	_power_label.text = "\n".join(lines)
+	_power_label.add_theme_color_override("font_color", color)
 
 
 # --------------------------------------------------------------------------

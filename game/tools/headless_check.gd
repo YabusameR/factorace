@@ -83,6 +83,101 @@ const LAYOUTS := {
 	],
 }
 
+## 動力ステージの想定解。水車からシャフトで回転を運び、機械を回す。
+const LAYOUTS_POWER := {
+	"s5":
+	[
+		# 搬送:分配して製錬炉2台へ、合流して搬出口へ
+		[Vector2i(1, 4), "belt", 0],
+		[Vector2i(2, 4), "splitter", 0],
+		[Vector2i(3, 4), "smelter_iron", 0],
+		[Vector2i(2, 5), "belt", 0],
+		[Vector2i(3, 5), "smelter_iron", 0],
+		[Vector2i(4, 5), "belt", 3],
+		[Vector2i(4, 4), "belt", 0],
+		[Vector2i(5, 4), "belt", 0],
+		[Vector2i(6, 4), "belt", 0],
+		[Vector2i(7, 4), "belt", 0],
+		[Vector2i(8, 4), "belt", 0],
+		[Vector2i(9, 4), "belt", 0],
+		[Vector2i(10, 4), "belt", 0],
+		# 動力:水車(5,0)から製錬炉まで
+		[Vector2i(5, 1), "shaft", 0],
+		[Vector2i(4, 1), "shaft", 0],
+		[Vector2i(3, 1), "shaft", 0],
+		[Vector2i(3, 2), "shaft", 0],
+		[Vector2i(3, 3), "shaft", 0],
+	],
+	"s6":
+	[
+		# 搬送:製錬炉2台(増速)→ 組立機1台(増速)
+		[Vector2i(1, 5), "belt", 0],
+		[Vector2i(2, 5), "splitter", 0],
+		[Vector2i(3, 5), "smelter_iron", 0],
+		[Vector2i(2, 6), "belt", 0],
+		[Vector2i(3, 6), "smelter_iron", 0],
+		[Vector2i(4, 6), "belt", 3],
+		[Vector2i(4, 5), "belt", 0],
+		[Vector2i(5, 5), "assembler_gear", 0],
+		[Vector2i(6, 5), "belt", 0],
+		[Vector2i(7, 5), "belt", 0],
+		[Vector2i(8, 5), "belt", 0],
+		[Vector2i(9, 5), "belt", 0],
+		[Vector2i(10, 5), "belt", 0],
+		[Vector2i(11, 5), "belt", 0],
+		# 動力:水車2台を繋いでから増速し、機械へ配る
+		[Vector2i(5, 0), "shaft", 0],
+		[Vector2i(6, 0), "shaft", 0],
+		[Vector2i(7, 0), "shaft", 0],
+		[Vector2i(6, 1), "gearbox_up", 1],
+		[Vector2i(6, 2), "shaft", 0],
+		[Vector2i(5, 2), "shaft", 0],
+		[Vector2i(4, 2), "shaft", 0],
+		[Vector2i(3, 2), "shaft", 0],
+		[Vector2i(3, 3), "shaft", 0],
+		[Vector2i(3, 4), "shaft", 0],
+		[Vector2i(5, 3), "shaft", 0],
+		[Vector2i(5, 4), "shaft", 0],
+	],
+	"s7":
+	[
+		# 鉄ライン
+		[Vector2i(1, 2), "belt", 0],
+		[Vector2i(2, 2), "smelter_iron", 0],
+		[Vector2i(3, 2), "belt", 0],
+		[Vector2i(4, 2), "belt", 1],
+		[Vector2i(4, 3), "belt", 1],
+		[Vector2i(4, 4), "belt", 1],
+		# 銅ライン
+		[Vector2i(1, 7), "belt", 0],
+		[Vector2i(2, 7), "smelter_copper", 0],
+		[Vector2i(3, 7), "belt", 0],
+		[Vector2i(4, 7), "belt", 3],
+		[Vector2i(4, 6), "belt", 3],
+		# 組立と搬出
+		[Vector2i(4, 5), "assembler_circuit", 0],
+		[Vector2i(5, 5), "belt", 0],
+		[Vector2i(6, 5), "belt", 0],
+		[Vector2i(7, 5), "belt", 0],
+		[Vector2i(8, 5), "belt", 0],
+		[Vector2i(9, 5), "belt", 0],
+		[Vector2i(10, 5), "belt", 0],
+		[Vector2i(11, 5), "belt", 0],
+		[Vector2i(12, 5), "belt", 0],
+		# 動力:水車から等速のまま製錬炉2台へ。組立機だけ増速機で2倍にする
+		[Vector2i(6, 1), "shaft", 0],
+		[Vector2i(5, 1), "shaft", 0],
+		[Vector2i(4, 1), "shaft", 0],
+		[Vector2i(3, 1), "shaft", 0],
+		[Vector2i(2, 1), "shaft", 0],
+		[Vector2i(2, 3), "shaft", 0],
+		[Vector2i(2, 4), "shaft", 0],
+		[Vector2i(2, 5), "shaft", 0],
+		[Vector2i(2, 6), "shaft", 0],
+		[Vector2i(3, 5), "gearbox_up", 0],
+	],
+}
+
 ## 詰めたレイアウト。par(特にGOLD)が到達可能かを確かめるために測る。
 const LAYOUTS_TUNED := {
 	"s2":
@@ -203,7 +298,11 @@ var _screens_ready := false
 func _initialize() -> void:
 	print("=== シミュレーション(基本の想定解) ===")
 	for stage in Stages.LIST:
-		_run_stage(String(stage.id), LAYOUTS, "基本")
+		if LAYOUTS.has(stage.id):
+			_run_stage(String(stage.id), LAYOUTS, "基本")
+	print("=== シミュレーション(動力ステージ) ===")
+	for stage_id in LAYOUTS_POWER:
+		_run_stage(String(stage_id), LAYOUTS_POWER, "基本")
 	print("=== シミュレーション(詰めたレイアウト) ===")
 	for stage_id in LAYOUTS_TUNED:
 		_run_stage(String(stage_id), LAYOUTS_TUNED, "最適化")
