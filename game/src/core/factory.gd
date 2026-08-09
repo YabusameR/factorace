@@ -10,6 +10,11 @@ extends RefCounted
 ## progress が 1.0 に達したら次のマスへ受け渡す。受け取り手が塞がっていれば 1.0 のまま待つ。
 ## この「待つ」がそのまま詰まり(バックプレッシャー)になり、ライン設計の巧拙がタイムに出る。
 ##
+## ## 採掘
+## 原石は鉱脈から出る。鉱脈はクリックで手掘りできるが遅い(採掘間隔の MANUAL_PENALTY 倍)。
+## 鉱脈の上にドリルを重ねて置くと自動で掘り、動力ステージでは回転数に比例して速くなる。
+## ドリルが乗っている鉱脈は手掘りできない。手とドリルを併用した連打で稼ぐ遊びを避けるため。
+##
 ## ## 動力(回転力)
 ## `power` を有効にしたステージでは、機械は動力網に繋がっていないと動かない。
 ## 回転数が高いほど加工が速く終わるが、食う応力も比例して増え、系統の供給を超えると丸ごと止まる。
@@ -19,6 +24,8 @@ extends RefCounted
 const STEP := 1.0 / 60.0
 ## 1フレームで消化する最大シミュレーション時間(タブ復帰時の暴走を防ぐ)。
 const MAX_CATCHUP := 0.25
+## 手掘りのクールタイムは採掘間隔の何倍か。ドリルを置く動機を残すため遅くしてある。
+const MANUAL_PENALTY := 3.0
 
 
 ## 盤面1マスぶんの状態。
@@ -44,10 +51,16 @@ class Cell:
 	var out_item: String = ""
 	var out_count: int = 0
 
-	# --- 搬入口(SOURCE) ---
+	# --- 鉱脈(ORE_NODE) ---
 	var spawn_item: String = ""
 	var spawn_interval: float = 1.0
 	var spawn_timer: float = 0.0
+	var manual_timer: float = 0.0  ## 手掘りのクールタイム残り
+
+	# --- 重ね置き(いまのところ鉱脈の上のドリルだけ) ---
+	var overlay_def_id: String = ""
+	var overlay_def: Dictionary = {}
+	var overlay_dir: int = 0
 
 	# --- 動力源(POWER_SOURCE) ---
 	# def の値が既定だが、ステージ側で強弱を変えられるようにセルに持たせている。
@@ -56,6 +69,24 @@ class Cell:
 
 	func kind() -> int:
 		return def.get("kind", -1)
+
+	func has_drill() -> bool:
+		return overlay_def.get("kind", -1) == Defs.Kind.DRILL
+
+	## 原石を吐き出す向き。ドリルが乗っていればドリルの向きに従う。
+	func output_dir() -> int:
+		return overlay_dir if has_drill() else dir
+
+	## 手掘りできる状態か。ドリルが塞いでいたら不可。
+	func can_mine_by_hand() -> bool:
+		return kind() == Defs.Kind.ORE_NODE and not has_drill() and manual_timer <= 0.0
+
+	## 手掘りクールタイムの進み具合(0.0〜1.0)。1.0 で掘れる。
+	func manual_ready_ratio() -> float:
+		var total := spawn_interval * MANUAL_PENALTY
+		if total <= 0.0:
+			return 1.0
+		return clampf(1.0 - manual_timer / total, 0.0, 1.0)
 
 	## 中身だけを空にする。設置物そのものは残す。
 	func clear_contents() -> void:
@@ -68,6 +99,7 @@ class Cell:
 		out_item = ""
 		out_count = 0
 		spawn_timer = 0.0
+		manual_timer = 0.0
 
 	## 加工の進捗(0.0〜1.0)。UIのプログレスバー用。
 	func craft_ratio() -> float:
@@ -133,7 +165,10 @@ func cell_at(pos: Vector2i) -> Cell:
 func part_count() -> int:
 	var n := 0
 	for pos in cells:
-		if not cells[pos].fixed:
+		var c: Cell = cells[pos]
+		if not c.fixed:
+			n += 1
+		if c.has_drill():
 			n += 1
 	return n
 
@@ -146,6 +181,19 @@ func place(pos: Vector2i, def_id: String, dir: int) -> bool:
 	if d.is_empty():
 		return false
 	var existing: Cell = cells.get(pos)
+	var is_drill: bool = int(d.get("kind", -1)) == Defs.Kind.DRILL
+	if is_drill:
+		# ドリルは単体では置けない。鉱脈の上に重ねる。
+		if existing == null or existing.kind() != Defs.Kind.ORE_NODE:
+			return false
+		if existing.overlay_def_id == def_id and existing.overlay_dir == dir:
+			return false
+		existing.overlay_def_id = def_id
+		existing.overlay_def = d
+		existing.overlay_dir = dir
+		existing.spawn_timer = 0.0
+		_rebuild_order()
+		return true
 	if existing != null:
 		if existing.fixed:
 			return false
@@ -164,17 +212,34 @@ func place(pos: Vector2i, def_id: String, dir: int) -> bool:
 
 func remove(pos: Vector2i) -> bool:
 	var c: Cell = cells.get(pos)
-	if c == null or c.fixed:
+	if c == null:
+		return false
+	if c.has_drill():
+		# 固定物(鉱脈)そのものは残し、重ねたドリルだけ外す。
+		_strip_overlay(c)
+		_rebuild_order()
+		return true
+	if c.fixed:
 		return false
 	cells.erase(pos)
 	_rebuild_order()
 	return true
 
 
+func _strip_overlay(cell: Cell) -> void:
+	cell.overlay_def_id = ""
+	cell.overlay_def = {}
+	cell.overlay_dir = 0
+	cell.spawn_timer = 0.0
+
+
 ## プレイヤーの設置物をすべて撤去する。
 func clear_all() -> void:
 	for pos in cells.keys():
-		if not cells[pos].fixed:
+		var c: Cell = cells[pos]
+		if c.has_drill():
+			_strip_overlay(c)
+		if not c.fixed:
 			cells.erase(pos)
 	_rebuild_order()
 
@@ -230,8 +295,8 @@ func _step(dt: float) -> void:
 		if c == null:
 			continue
 		var kind: int = c.kind()
-		if kind == Defs.Kind.SOURCE:
-			_step_source(c, dt)
+		if kind == Defs.Kind.ORE_NODE:
+			_step_ore_node(c, dt)
 		elif kind == Defs.Kind.MACHINE:
 			_step_machine(c, dt)
 		elif kind == Defs.Kind.BELT or kind == Defs.Kind.SPLITTER:
@@ -261,15 +326,46 @@ func _step_belt(c: Cell, dt: float) -> void:
 	c.progress = 1.0
 
 
-func _step_source(c: Cell, dt: float) -> void:
-	c.spawn_timer += dt
+func _step_ore_node(c: Cell, dt: float) -> void:
+	# 手掘りのクールタイムはドリルの有無に関係なく進む。
+	if c.manual_timer > 0.0:
+		c.manual_timer = maxf(c.manual_timer - dt, 0.0)
+	if not c.has_drill():
+		return
+	# ドリルは回転が速いほど速く掘る。動力が届いていなければ止まる。
+	var rpm := drill_rpm(c)
+	if rpm <= 0.0:
+		return
+	c.spawn_timer += dt * rpm
 	if c.spawn_timer < c.spawn_interval:
 		return
-	if _push(c, c.dir, c.spawn_item, 0.0):
+	if _push(c, c.overlay_dir, c.spawn_item, 0.0):
 		c.spawn_timer -= c.spawn_interval
 	else:
 		# 出口が詰まっている間は溜め込まない。空いた瞬間に出せるよう満タンで待つ。
 		c.spawn_timer = c.spawn_interval
+
+
+## ドリルが回る回転数。動力を使わないステージでは常に1。0 なら止まっている。
+func drill_rpm(cell: Cell) -> float:
+	if not cell.has_drill():
+		return 0.0
+	if not power_enabled:
+		return 1.0
+	return power.rpm_at(cell.pos)
+
+
+## 鉱脈を手で掘る。掘れたら true。稼働中しか掘れない。
+func mine_by_hand(pos: Vector2i) -> bool:
+	if not running or cleared:
+		return false
+	var c: Cell = cells.get(pos)
+	if c == null or not c.can_mine_by_hand():
+		return false
+	if not _push(c, c.dir, c.spawn_item, 0.0):
+		return false
+	c.manual_timer = c.spawn_interval * MANUAL_PENALTY
+	return true
 
 
 func _step_machine(c: Cell, dt: float) -> void:

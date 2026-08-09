@@ -3,7 +3,7 @@ extends Control
 ## ゲーム画面。工場の組み立て → 稼働 → クリア判定までを回す。
 ##
 ## 操作:
-##   左ドラッグ … 選択中のパーツを設置
+##   左ドラッグ … 選択中のパーツを設置(鉱脈の上ではクリックで手掘り)
 ##   右ドラッグ … 撤去
 ##   1〜9      … パーツ選択
 ##   R         … 向きを回転
@@ -157,6 +157,12 @@ func _update_info() -> void:
 
 
 func _on_cell_painted(pos: Vector2i) -> void:
+	# 鉱脈はクリックで手掘りになる。ドリルを選んでいるときだけ設置に回す。
+	var cell = _factory.cell_at(pos)
+	var selected_kind: int = int(Defs.building(_selected_def).get("kind", -1))
+	if cell != null and cell.kind() == Defs.Kind.ORE_NODE and selected_kind != Defs.Kind.DRILL:
+		_factory.mine_by_hand(pos)
+		return
 	if _selected_def == "":
 		return
 	_factory.place(pos, _selected_def, _dir)

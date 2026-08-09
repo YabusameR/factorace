@@ -11,7 +11,8 @@ enum Kind {
 	BELT,          ## 矢印の向きへ1マスずつ運ぶ
 	SPLITTER,      ## 正面と、その右隣へ交互に振り分ける
 	MACHINE,       ## レシピに従って加工する。動力ステージでは回転力が要る
-	SOURCE,        ## 原料の搬入口(ステージ固定・撤去不可)
+	ORE_NODE,      ## 原石が埋まっている鉱脈(ステージ固定・撤去不可)
+	DRILL,         ## 鉱脈の上に重ねて置く採掘機。自動で掘る
 	SINK,          ## 目標物の搬出口(ステージ固定・撤去不可)
 	POWER_SOURCE,  ## 回転を生む動力源(ステージ固定・撤去不可)
 	SHAFT,         ## 回転をそのまま隣へ伝える
@@ -144,12 +145,20 @@ static var BUILDINGS := {
 		"ratio": 0.5,
 		"desc": "回転を半分にして矢印の先へ伝える。遅くなるかわりに応力の節約になる。",
 	},
-	"source": {
-		"name": "搬入口",
+	"ore_node": {
+		"name": "鉱脈",
 		"short": "",
-		"kind": Kind.SOURCE,
-		"color": Color("2f6b3f"),
-		"desc": "原料が一定間隔で出てくる。撤去できない。",
+		"kind": Kind.ORE_NODE,
+		"color": Color("3d5a44"),
+		"desc": "原石が埋まっている。クリックすると手で掘れる(遅い)。ドリルを重ねて置くと自動で掘る。",
+	},
+	"drill": {
+		"stress": 1.0,
+		"name": "ドリル",
+		"short": "",
+		"kind": Kind.DRILL,
+		"color": Color("8a6a2f"),
+		"desc": "鉱脈の上に重ねて置く。矢印の向きへ原石を出す。回転が速いほど採掘が速い。",
 	},
 	"sink": {
 		"name": "搬出口",
