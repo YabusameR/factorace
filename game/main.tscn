@@ -1,18 +1,31 @@
 [gd_scene load_steps=2 format=3 uid="uid://main_scene"]
 
-[sub_resource type="GDScript" id="GDScript_main"]
-script/source = "extends Node2D
+[ext_resource type="Script" path="res://src/app.gd" id="1_app"]
 
-func _ready() -> void:
-	print(\"Godot Web Template: ready\")
-"]
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_app")
 
-[node name="Main" type="Node2D"]
-script = SubResource("GDScript_main")
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0705882, 0.0784314, 0.0980392, 1)
 
-[node name="Label" type="Label" parent="."]
-offset_left = 40.0
-offset_top = 40.0
-offset_right = 400.0
-offset_bottom = 80.0
-text = "Godot Web Template — Hello!"
+[node name="ScreenHost" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
