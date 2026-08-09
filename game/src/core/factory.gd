@@ -9,6 +9,11 @@ extends RefCounted
 ## ベルト1マスはアイテムを最大1個だけ持ち、progress(0.0〜1.0)が進行度。
 ## progress が 1.0 に達したら次のマスへ受け渡す。受け取り手が塞がっていれば 1.0 のまま待つ。
 ## この「待つ」がそのまま詰まり(バックプレッシャー)になり、ライン設計の巧拙がタイムに出る。
+##
+## ## 動力(回転力)
+## `power` を有効にしたステージでは、機械は動力網に繋がっていないと動かない。
+## 回転数が高いほど加工が速く終わるが、食う応力も比例して増え、系統の供給を超えると丸ごと止まる。
+## 解決は power.gd が持つ。ここでは「機械の加工速度に回転数を掛ける」だけ。
 
 ## シミュレーションの固定ステップ。フレームレートに依らず同じ結果になるようにする。
 const STEP := 1.0 / 60.0
@@ -44,6 +49,11 @@ class Cell:
 	var spawn_interval: float = 1.0
 	var spawn_timer: float = 0.0
 
+	# --- 動力源(POWER_SOURCE) ---
+	# def の値が既定だが、ステージ側で強弱を変えられるようにセルに持たせている。
+	var power_rpm: float = 1.0
+	var power_capacity: float = 0.0
+
 	func kind() -> int:
 		return def.get("kind", -1)
 
@@ -74,6 +84,11 @@ var cells := {}  ## Vector2i -> Cell
 var target_item := ""
 var target_count := 0
 
+## 動力(回転力)を使うステージか。false なら機械は常に回転数1で回る。
+## 既存ステージのバランスを壊さないよう、ステージ側で明示的に有効化する。
+var power_enabled := false
+var power := PowerGrid.new()
+
 var delivered := 0
 var elapsed := 0.0
 var running := false
@@ -85,6 +100,7 @@ var _order: Array = []  ## 決定的な処理順(y→xの昇順)
 
 ## ステージ定義から盤面を初期化する。
 func setup(stage: Dictionary) -> void:
+	power_enabled = bool(stage.get("power", false))
 	size = stage.size
 	target_item = stage.target_item
 	target_count = int(stage.target_count)
@@ -98,6 +114,8 @@ func setup(stage: Dictionary) -> void:
 		c.fixed = true
 		c.spawn_item = String(fixed_def.get("item", ""))
 		c.spawn_interval = float(fixed_def.get("interval", 1.0))
+		c.power_rpm = float(fixed_def.get("rpm", c.def.get("rpm", 1.0)))
+		c.power_capacity = float(fixed_def.get("capacity", c.def.get("capacity", 0.0)))
 		cells[c.pos] = c
 	_rebuild_order()
 	reset_run()
@@ -192,6 +210,18 @@ func _rebuild_order() -> void:
 	_order = cells.keys()
 	_order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return a.x < b.x if a.y == b.y else a.y < b.y)
+	# 動力網は稼働中に変化しないので、レイアウトが変わったときだけ解き直せばよい。
+	if power_enabled:
+		power.build(cells)
+	else:
+		power.clear()
+
+
+## 機械が回る回転数。動力を使わないステージでは常に1。0 なら止まっている。
+func machine_rpm(cell: Cell) -> float:
+	if not power_enabled:
+		return 1.0
+	return power.rpm_at(cell.pos)
 
 
 func _step(dt: float) -> void:
@@ -243,6 +273,10 @@ func _step_source(c: Cell, dt: float) -> void:
 
 
 func _step_machine(c: Cell, dt: float) -> void:
+	# 動力が届いていない/系統が過負荷なら、機械は完全に止まる(Create の Overstressed と同じ扱い)。
+	var rpm := machine_rpm(c)
+	if rpm <= 0.0:
+		return
 	var recipe: Dictionary = c.def.recipe
 	# 完成品の払い出し。受け取り手が空くたびに1個ずつ出る。
 	if c.out_count > 0 and _push(c, c.dir, c.out_item, 0.0):
@@ -250,7 +284,8 @@ func _step_machine(c: Cell, dt: float) -> void:
 		if c.out_count == 0:
 			c.out_item = ""
 	if c.crafting:
-		c.craft_left -= dt
+		# 回転が速いほど加工が速く終わる。実質の加工時間は 基本時間 ÷ 回転数。
+		c.craft_left -= dt * rpm
 		if c.craft_left <= 0.0:
 			c.crafting = false
 			c.out_item = recipe.output

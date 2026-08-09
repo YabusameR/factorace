@@ -8,11 +8,14 @@ extends RefCounted
 
 ## パーツの種類。挙動の分岐はすべてこれで行う。
 enum Kind {
-	BELT,      ## 矢印の向きへ1マスずつ運ぶ
-	SPLITTER,  ## 正面と、その右隣へ交互に振り分ける
-	MACHINE,   ## レシピに従って加工する
-	SOURCE,    ## 原料の搬入口(ステージ固定・撤去不可)
-	SINK,      ## 目標物の搬出口(ステージ固定・撤去不可)
+	BELT,          ## 矢印の向きへ1マスずつ運ぶ
+	SPLITTER,      ## 正面と、その右隣へ交互に振り分ける
+	MACHINE,       ## レシピに従って加工する。動力ステージでは回転力が要る
+	SOURCE,        ## 原料の搬入口(ステージ固定・撤去不可)
+	SINK,          ## 目標物の搬出口(ステージ固定・撤去不可)
+	POWER_SOURCE,  ## 回転を生む動力源(ステージ固定・撤去不可)
+	SHAFT,         ## 回転をそのまま隣へ伝える
+	GEARBOX,       ## 回転数を変えて伝える。動力網と動力網の境界になる
 }
 
 ## 方向は 0=右, 1=下, 2=左, 3=上。時計回りに +1 で回転する。
@@ -35,10 +38,14 @@ static var ITEMS := {
 }
 
 ## パーツ定義。
-##   kind    … 挙動の種類(Kind)
-##   speed   … BELT / SPLITTER のみ。マス/秒
-##   recipe  … MACHINE のみ。{inputs: {item_id: 個数}, output: item_id, count: 個数, time: 秒}
-##   short   … 盤面に描く1〜2文字のラベル(空なら描かない)
+##   kind     … 挙動の種類(Kind)
+##   speed    … BELT / SPLITTER のみ。マス/秒
+##   recipe   … MACHINE のみ。{inputs: {item_id: 個数}, output: item_id, count: 個数, time: 秒}
+##   stress   … MACHINE のみ。回転数1のときに食う応力。実際の消費は 応力 × 回転数
+##   rpm      … POWER_SOURCE のみ。生む回転数
+##   capacity … POWER_SOURCE のみ。回転数1のときの供給量。実際の供給は 供給量 × 回転数
+##   ratio    … GEARBOX のみ。矢印の先へ伝えるときの回転数の倍率
+##   short    … 盤面に描く1〜2文字のラベル(空なら描かない)
 static var BUILDINGS := {
 	"belt": {
 		"name": "コンベア",
@@ -65,6 +72,7 @@ static var BUILDINGS := {
 		"desc": "正面と、その右隣のマスへ交互に振り分ける。",
 	},
 	"smelter_iron": {
+		"stress": 2.0,
 		"name": "製錬炉(鉄)",
 		"short": "製",
 		"kind": Kind.MACHINE,
@@ -73,6 +81,7 @@ static var BUILDINGS := {
 		"desc": "鉄鉱石を鉄板にする。",
 	},
 	"smelter_copper": {
+		"stress": 2.0,
 		"name": "製錬炉(銅)",
 		"short": "製",
 		"kind": Kind.MACHINE,
@@ -81,6 +90,7 @@ static var BUILDINGS := {
 		"desc": "銅鉱石を銅板にする。",
 	},
 	"assembler_gear": {
+		"stress": 3.0,
 		"name": "組立機(歯車)",
 		"short": "組",
 		"kind": Kind.MACHINE,
@@ -89,6 +99,7 @@ static var BUILDINGS := {
 		"desc": "鉄板2枚から歯車を作る。",
 	},
 	"assembler_circuit": {
+		"stress": 3.0,
 		"name": "組立機(基板)",
 		"short": "組",
 		"kind": Kind.MACHINE,
@@ -100,6 +111,38 @@ static var BUILDINGS := {
 			"time": 1.5,
 		},
 		"desc": "鉄板と銅板から基板を作る。",
+	},
+	"water_wheel": {
+		"name": "水車",
+		"short": "",
+		"kind": Kind.POWER_SOURCE,
+		"color": Color("2f5f7a"),
+		"rpm": 1.0,
+		"capacity": 8.0,
+		"desc": "回転を生む動力源。ステージが最初から置いてある。撤去できない。",
+	},
+	"shaft": {
+		"name": "シャフト",
+		"short": "",
+		"kind": Kind.SHAFT,
+		"color": Color("5a5347"),
+		"desc": "回転をそのまま隣のマスへ伝える。上下左右、隣接していれば繋がる。",
+	},
+	"gearbox_up": {
+		"name": "増速機",
+		"short": "速",
+		"kind": Kind.GEARBOX,
+		"color": Color("6b6a3a"),
+		"ratio": 2.0,
+		"desc": "回転を2倍にして矢印の先へ伝える。その先の機械は2倍速で動くが、食う応力も2倍になる。",
+	},
+	"gearbox_down": {
+		"name": "減速機",
+		"short": "遅",
+		"kind": Kind.GEARBOX,
+		"color": Color("3a5a4a"),
+		"ratio": 0.5,
+		"desc": "回転を半分にして矢印の先へ伝える。遅くなるかわりに応力の節約になる。",
 	},
 	"source": {
 		"name": "搬入口",
@@ -152,7 +195,20 @@ static func building_detail(id: String) -> String:
 		lines.append(recipe_text(d.recipe))
 	elif d.has("speed"):
 		lines.append("搬送速度: %.1f マス/秒" % float(d.speed))
+	if d.has("stress"):
+		lines.append("応力: %.1f × 回転数" % float(d.stress))
+	if d.has("capacity"):
+		lines.append("供給: %.1f / 回転数 %.1f" % [float(d.capacity), float(d.rpm)])
+	if d.has("ratio"):
+		lines.append("回転数: %s" % format_ratio(float(d.ratio)))
 	return "\n".join(lines)
+
+
+## 回転数の倍率表示。GDScript の書式には %g が無いので自前で整える。
+static func format_ratio(value: float) -> String:
+	if is_equal_approx(value, roundf(value)):
+		return "×%d" % int(roundf(value))
+	return ("×%.2f" % value).rstrip("0").rstrip(".")
 
 
 static func recipe_text(recipe: Dictionary) -> String:
