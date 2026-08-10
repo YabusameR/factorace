@@ -106,8 +106,8 @@ func _draw_building(cell) -> void:
 	if cell.fixed:
 		draw_rect(rect, FIXED_OUTLINE, false, 2.0)
 
-	if kind == Defs.Kind.SOURCE:
-		draw_circle(rect.get_center(), _cell_size * 0.2, Defs.item_color(cell.spawn_item))
+	if kind == Defs.Kind.ORE_NODE:
+		_draw_ore_node(cell, rect)
 	elif kind == Defs.Kind.SINK:
 		draw_circle(rect.get_center(), _cell_size * 0.2, Defs.item_color(factory.target_item))
 		draw_arc(rect.get_center(), _cell_size * 0.32, 0.0, TAU, 20, Color(1, 1, 1, 0.5), 2.0)
@@ -127,6 +127,9 @@ func _draw_building(cell) -> void:
 		_draw_water_wheel(cell, rect)
 	elif kind == Defs.Kind.SHAFT:
 		_draw_shaft(cell)
+
+	if kind == Defs.Kind.BELT or kind == Defs.Kind.SPLITTER:
+		_draw_belt_treads(cell, rect)
 
 	# 矢印は出口側に寄せて描く。中央を空けておかないとラベルや流れるアイテムと重なる。
 	# シャフトと動力源は向きを持たないので描かない。
@@ -148,8 +151,76 @@ func _draw_building(cell) -> void:
 
 static func _has_direction(kind: int) -> bool:
 	return (
-		kind != Defs.Kind.SINK and kind != Defs.Kind.POWER_SOURCE and kind != Defs.Kind.SHAFT
+		kind != Defs.Kind.SINK
+		and kind != Defs.Kind.POWER_SOURCE
+		and kind != Defs.Kind.SHAFT
+		and kind != Defs.Kind.ORE_NODE
 	)
+
+
+## ベルト面の流れ。アイテムが乗っていなくても「動いている」ことが見えるように、
+## 進行方向へトレッド(横線)を流す。elapsed が止まれば自然に止まる。
+func _draw_belt_treads(cell, rect: Rect2) -> void:
+	var speed: float = float(cell.def.speed)
+	var forward := Vector2(Defs.DIR_VECTORS[cell.dir])
+	var side := Vector2(-forward.y, forward.x)
+	var spacing: float = _cell_size * 0.3
+	var phase: float = fposmod(factory.elapsed * speed * _cell_size, spacing)
+	var center := rect.get_center()
+	var half: float = _cell_size * 0.5
+	var reach: float = _cell_size * 0.28
+	var color := Color(1, 1, 1, 0.14)
+	var width: float = maxf(_cell_size * 0.06, 1.0)
+	var offset: float = -half + phase
+	while offset < half:
+		var mid := center + forward * offset
+		draw_line(mid - side * reach, mid + side * reach, color, width)
+		offset += spacing
+
+
+## 鉱脈。手掘りのクールタイムを輪で見せ、ドリルが乗っていればその上に重ねて描く。
+func _draw_ore_node(cell, rect: Rect2) -> void:
+	var center := rect.get_center()
+	# 埋まっている原石。
+	for i in 3:
+		var angle: float = TAU * i / 3.0 - PI * 0.5
+		var at := center + Vector2(cos(angle), sin(angle)) * _cell_size * 0.19
+		draw_circle(at, _cell_size * 0.11, Defs.item_color(cell.spawn_item))
+
+	if cell.has_drill():
+		_draw_drill(cell, rect)
+		return
+
+	# 手掘りの準備ぐあい。満ちたら白、溜まっている間は暗い。
+	var ratio: float = cell.manual_ready_ratio()
+	var ring := Color(1, 1, 1, 0.75) if ratio >= 1.0 else Color(1, 1, 1, 0.3)
+	draw_arc(center, _cell_size * 0.36, -PI * 0.5, -PI * 0.5 + TAU * ratio, 24, ring, 2.0)
+	_draw_edge_arrow(cell.pos, cell.dir, Color(1, 1, 1, 0.45))
+
+
+## 鉱脈に重ねたドリル。刃が回転数に比例して回る。
+func _draw_drill(cell, rect: Rect2) -> void:
+	var inner := rect.grow(-_cell_size * 0.12)
+	var tint: Color = cell.overlay_def.color
+	tint.a = 0.9
+	draw_rect(inner, tint, true)
+	draw_rect(inner, Color(1, 1, 1, 0.35), false, 1.0)
+	_draw_spinner(cell.pos, rect.get_center(), _cell_size * 0.22, 3)
+	_draw_edge_arrow(cell.pos, cell.overlay_dir, Color(1, 1, 1, 0.8))
+	if factory.power_enabled:
+		_draw_drill_power_state(cell, rect)
+
+
+func _draw_drill_power_state(cell, rect: Rect2) -> void:
+	var rpm: float = factory.drill_rpm(cell)
+	if rpm <= 0.0:
+		draw_rect(rect, Color(0.9, 0.25, 0.25, 0.3), true)
+		draw_rect(rect, Color(1.0, 0.4, 0.4, 0.9), false, 2.0)
+		return
+	if is_equal_approx(rpm, 1.0):
+		return
+	var at := rect.position + Vector2(_cell_size * 0.08, rect.size.y - _cell_size * 0.1)
+	_draw_small_text(at, Defs.format_ratio(rpm), Color("ffd24a"))
 
 
 ## 動力源。回転しているのが見えるように輪と輻を回す。
@@ -250,7 +321,10 @@ func _draw_ghost() -> void:
 	if def.is_empty():
 		return
 	var occupied = factory.cell_at(_hover)
-	var blocked: bool = occupied != null and occupied.fixed
+	var is_drill: bool = int(def.get("kind", -1)) == Defs.Kind.DRILL
+	var on_ore_node: bool = occupied != null and occupied.kind() == Defs.Kind.ORE_NODE
+	# ドリルは鉱脈の上だけ、それ以外のパーツは固定物の上には置けない。
+	var blocked: bool = (not on_ore_node) if is_drill else (occupied != null and occupied.fixed)
 	var tint: Color = def.color
 	tint.a = 0.45
 	draw_rect(rect, tint, true)

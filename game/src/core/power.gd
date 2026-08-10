@@ -117,10 +117,14 @@ func summary() -> Dictionary:
 
 
 ## 回転を隣へ伝えるマスか。増速機/減速機は境界役なので導通しない。
+## 鉱脈そのものは導通しないが、ドリルを載せれば動力を受ける側として繋がる。
 static func conducts(cell) -> bool:
 	var kind: int = cell.kind()
 	return (
-		kind == Defs.Kind.POWER_SOURCE or kind == Defs.Kind.SHAFT or kind == Defs.Kind.MACHINE
+		kind == Defs.Kind.POWER_SOURCE
+		or kind == Defs.Kind.SHAFT
+		or kind == Defs.Kind.MACHINE
+		or cell.has_drill()
 	)
 
 
@@ -254,5 +258,7 @@ func _compute_load(cells: Dictionary) -> void:
 		elif kind == Defs.Kind.MACHINE:
 			# 速く回すほど食う。ここが「増速すればタイムは縮むが動力が要る」の正体。
 			system.demand += float(cell.def.get("stress", 0.0)) * network.rpm
+		if cell.has_drill():
+			system.demand += float(cell.overlay_def.get("stress", 0.0)) * network.rpm
 	for system in systems:
 		system.overstressed = system.demand > system.capacity + 0.0001

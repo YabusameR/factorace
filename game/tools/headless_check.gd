@@ -12,6 +12,8 @@ extends SceneTree
 const LAYOUTS := {
 	"s1":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 4), "drill", 0],
 		[Vector2i(1, 4), "belt", 0],
 		[Vector2i(2, 4), "belt", 0],
 		[Vector2i(3, 4), "belt", 0],
@@ -23,6 +25,8 @@ const LAYOUTS := {
 	],
 	"s2":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 4), "drill", 0],
 		[Vector2i(1, 4), "belt", 0],
 		[Vector2i(2, 4), "belt", 0],
 		[Vector2i(3, 4), "splitter", 0],
@@ -40,6 +44,8 @@ const LAYOUTS := {
 	],
 	"s3":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 5), "drill", 0],
 		[Vector2i(1, 5), "belt", 0],
 		[Vector2i(2, 5), "belt", 0],
 		[Vector2i(3, 5), "splitter", 0],
@@ -57,6 +63,9 @@ const LAYOUTS := {
 	],
 	"s4":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 2), "drill", 0],
+		[Vector2i(0, 7), "drill", 0],
 		[Vector2i(1, 2), "belt", 0],
 		[Vector2i(2, 2), "belt", 0],
 		[Vector2i(3, 2), "belt", 0],
@@ -87,6 +96,8 @@ const LAYOUTS := {
 const LAYOUTS_POWER := {
 	"s5":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 4), "drill", 0],
 		# 搬送:分配して製錬炉2台へ、合流して搬出口へ
 		[Vector2i(1, 4), "belt", 0],
 		[Vector2i(2, 4), "splitter", 0],
@@ -107,9 +118,17 @@ const LAYOUTS_POWER := {
 		[Vector2i(3, 1), "shaft", 0],
 		[Vector2i(3, 2), "shaft", 0],
 		[Vector2i(3, 3), "shaft", 0],
+		# ドリルにも動力が要る
+		[Vector2i(2, 1), "shaft", 0],
+		[Vector2i(1, 1), "shaft", 0],
+		[Vector2i(0, 1), "shaft", 0],
+		[Vector2i(0, 2), "shaft", 0],
+		[Vector2i(0, 3), "shaft", 0],
 	],
 	"s6":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 5), "drill", 0],
 		# 搬送:製錬炉2台(増速)→ 組立機1台(増速)
 		[Vector2i(1, 5), "belt", 0],
 		[Vector2i(2, 5), "splitter", 0],
@@ -138,9 +157,16 @@ const LAYOUTS_POWER := {
 		[Vector2i(3, 4), "shaft", 0],
 		[Vector2i(5, 3), "shaft", 0],
 		[Vector2i(5, 4), "shaft", 0],
+		# ドリルにも動力が要る
+		[Vector2i(2, 4), "shaft", 0],
+		[Vector2i(1, 4), "shaft", 0],
+		[Vector2i(0, 4), "shaft", 0],
 	],
 	"s7":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 2), "drill", 0],
+		[Vector2i(0, 7), "drill", 0],
 		# 鉄ライン
 		[Vector2i(1, 2), "belt", 0],
 		[Vector2i(2, 2), "smelter_iron", 0],
@@ -175,6 +201,11 @@ const LAYOUTS_POWER := {
 		[Vector2i(2, 5), "shaft", 0],
 		[Vector2i(2, 6), "shaft", 0],
 		[Vector2i(3, 5), "gearbox_up", 0],
+		# ドリル2台にも等速のまま動力を引く
+		[Vector2i(1, 1), "shaft", 0],
+		[Vector2i(0, 1), "shaft", 0],
+		[Vector2i(1, 6), "shaft", 0],
+		[Vector2i(0, 6), "shaft", 0],
 	],
 }
 
@@ -182,6 +213,8 @@ const LAYOUTS_POWER := {
 const LAYOUTS_TUNED := {
 	"s2":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 4), "drill", 0],
 		[Vector2i(1, 4), "splitter", 0],
 		[Vector2i(2, 4), "smelter_iron", 0],
 		[Vector2i(1, 5), "belt", 0],
@@ -198,6 +231,9 @@ const LAYOUTS_TUNED := {
 	],
 	"s4":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 2), "drill", 0],
+		[Vector2i(0, 7), "drill", 0],
 		[Vector2i(1, 2), "belt", 0],
 		[Vector2i(2, 2), "smelter_iron", 0],
 		[Vector2i(3, 2), "belt", 0],
@@ -222,6 +258,8 @@ const LAYOUTS_TUNED := {
 	],
 	"s3":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 5), "drill", 0],
 		[Vector2i(1, 5), "belt", 0],
 		[Vector2i(2, 5), "splitter", 0],
 		[Vector2i(3, 5), "splitter", 3],
@@ -257,6 +295,8 @@ const LAYOUTS_TUNED := {
 static var LAYOUTS_FAST := {
 	"s3":
 	[
+		# 鉱脈にドリルを重ねる
+		[Vector2i(0, 5), "drill", 0],
 		[Vector2i(1, 5), "splitter", 0],
 		[Vector2i(2, 5), "splitter", 3],
 		[Vector2i(2, 4), "belt", 0],
@@ -309,6 +349,8 @@ func _initialize() -> void:
 	print("=== シミュレーション(高速コンベア版) ===")
 	for stage_id in LAYOUTS_FAST:
 		_run_stage(String(stage_id), LAYOUTS_FAST, "高速")
+	print("=== 手掘り(ドリルなし) ===")
+	_run_hand_mining()
 
 
 func _process(_delta: float) -> bool:
@@ -374,6 +416,40 @@ func _run_stage(stage_id: String, layouts: Dictionary, label: String) -> void:
 			]
 		)
 	)
+
+
+## ドリルを置かず、鉱脈を叩き続けるだけでクリアできるかを見る。
+## ドリルより明確に遅いこと(置く動機が残っていること)も同時に確かめる。
+func _run_hand_mining() -> void:
+	var stage := Stages.get_stage("s1")
+	var factory := Factory.new()
+	factory.setup(stage)
+	for entry in LAYOUTS["s1"]:
+		if String(entry[1]) == "drill":
+			continue
+		factory.place(entry[0], String(entry[1]), int(entry[2]))
+
+	var node_pos := Vector2i(0, 4)
+	factory.running = true
+	var taps := 0
+	while not factory.cleared and factory.elapsed < TIMEOUT_SEC:
+		# 毎ステップ叩く。クールタイム中は空振りする。
+		if factory.mine_by_hand(node_pos):
+			taps += 1
+		factory.advance(Factory.STEP)
+
+	if not factory.cleared:
+		_fail("手掘りだけで %.0f 秒かかってもクリアできない(%d/%d)" % [
+			TIMEOUT_SEC, factory.delivered, factory.target_count
+		])
+		return
+	print("s1 手掘りのみ  タイム %s  叩いた回数 %d" % [
+		SaveData.format_time(factory.elapsed), taps
+	])
+
+	# ドリルを置いたときのタイムより遅くなければ、ドリルを置く意味がない。
+	if factory.elapsed <= 13.0:
+		_fail("手掘りがドリルと同等以上に速い(%.2f秒)。MANUAL_PENALTY を見直すこと" % factory.elapsed)
 
 
 func _spawn_screens() -> void:

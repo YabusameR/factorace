@@ -3,8 +3,9 @@ extends RefCounted
 
 ## ステージ(お題)の定義。
 ##
-## 1ステージ =「盤面の広さ」「搬入口/搬出口の位置」「目標生産物と個数」「使えるパーツ」「ランク基準タイム」。
-## fixed に置いたものはプレイヤーが撤去できない。搬入口には item(原料)と interval(秒)を持たせる。
+## 1ステージ =「盤面の広さ」「鉱脈/搬出口の位置」「目標生産物と個数」「使えるパーツ」「ランク基準タイム」。
+## fixed に置いたものはプレイヤーが撤去できない。鉱脈には item(原石)と interval(採掘間隔・秒)を持たせる。
+## 採掘間隔はドリルではなく鉱脈が持つ。鉱脈の豊かさをステージ設計で決められるようにするため。
 ##
 ## par は [金, 銀, 銅] のクリアタイム(秒)。この時間以下ならそのランク。
 
@@ -12,14 +13,14 @@ static var LIST := [
 	{
 		"id": "s1",
 		"name": "1. まっすぐ運ぶ",
-		"desc": "搬入口から出てくる鉄鉱石を、そのまま搬出口まで運ぶ。",
-		"hint": "コンベアは矢印の向きにしか運ばない。Rキーで向きを変えられる。",
+		"desc": "鉱脈の鉄鉱石を掘って、搬出口まで運ぶ。",
+		"hint": "鉱脈はクリックで手掘りできるが遅い。ドリルを鉱脈に重ねて置けば自動で掘る。コンベアは矢印の向きにしか運ばない(Rキーで回転)。",
 		"size": Vector2i(10, 8),
 		"target_item": "ore_iron",
 		"target_count": 20,
-		"palette": ["belt"],
+		"palette": ["drill", "belt"],
 		"fixed": [
-			{"pos": Vector2i(0, 4), "def": "source", "dir": 0, "item": "ore_iron", "interval": 0.5},
+			{"pos": Vector2i(0, 4), "def": "ore_node", "dir": 0, "item": "ore_iron", "interval": 0.5},
 			{"pos": Vector2i(9, 4), "def": "sink", "dir": 2},
 		],
 		"par": [13.0, 15.5, 20.0],
@@ -28,13 +29,13 @@ static var LIST := [
 		"id": "s2",
 		"name": "2. 鉄を製錬する",
 		"desc": "鉄鉱石を製錬炉に通して鉄板にし、搬出口へ届ける。",
-		"hint": "製錬炉は1秒に1枚しか作れない。搬入口は毎秒2個出てくる。分配器で炉を並べよう。",
+		"hint": "製錬炉は1秒に1枚しか作れない。ドリルは毎秒2個掘る。分配器で炉を並べよう。",
 		"size": Vector2i(12, 9),
 		"target_item": "plate_iron",
 		"target_count": 18,
-		"palette": ["belt", "splitter", "smelter_iron"],
+		"palette": ["drill", "belt", "splitter", "smelter_iron"],
 		"fixed": [
-			{"pos": Vector2i(0, 4), "def": "source", "dir": 0, "item": "ore_iron", "interval": 0.5},
+			{"pos": Vector2i(0, 4), "def": "ore_node", "dir": 0, "item": "ore_iron", "interval": 0.5},
 			{"pos": Vector2i(11, 4), "def": "sink", "dir": 2},
 		],
 		"par": [14.0, 17.0, 23.0],
@@ -47,9 +48,9 @@ static var LIST := [
 		"size": Vector2i(12, 10),
 		"target_item": "gear",
 		"target_count": 14,
-		"palette": ["belt", "splitter", "smelter_iron", "assembler_gear"],
+		"palette": ["drill", "belt", "splitter", "smelter_iron", "assembler_gear"],
 		"fixed": [
-			{"pos": Vector2i(0, 5), "def": "source", "dir": 0, "item": "ore_iron", "interval": 0.4},
+			{"pos": Vector2i(0, 5), "def": "ore_node", "dir": 0, "item": "ore_iron", "interval": 0.4},
 			{"pos": Vector2i(11, 5), "def": "sink", "dir": 2},
 		],
 		"par": [19.0, 23.0, 30.0],
@@ -63,6 +64,7 @@ static var LIST := [
 		"target_item": "circuit",
 		"target_count": 12,
 		"palette": [
+			"drill",
 			"belt",
 			"belt_fast",
 			"splitter",
@@ -71,8 +73,8 @@ static var LIST := [
 			"assembler_circuit",
 		],
 		"fixed": [
-			{"pos": Vector2i(0, 2), "def": "source", "dir": 0, "item": "ore_iron", "interval": 0.5},
-			{"pos": Vector2i(0, 7), "def": "source", "dir": 0, "item": "ore_copper", "interval": 0.5},
+			{"pos": Vector2i(0, 2), "def": "ore_node", "dir": 0, "item": "ore_iron", "interval": 0.5},
+			{"pos": Vector2i(0, 7), "def": "ore_node", "dir": 0, "item": "ore_copper", "interval": 0.5},
 			{"pos": Vector2i(13, 5), "def": "sink", "dir": 2},
 		],
 		"par": [23.0, 27.5, 35.0],
@@ -81,14 +83,14 @@ static var LIST := [
 		"id": "s5",
 		"name": "5. 動力を通す",
 		"desc": "水車の回転をシャフトで運び、製錬炉を回す。",
-		"hint": "機械は動力網に繋がっていないと動かない。シャフトは隣接していれば上下左右どちらにも繋がる。",
+		"hint": "機械もドリルも、動力網に繋がっていないと動かない。シャフトは隣接していれば上下左右どちらにも繋がる。",
 		"size": Vector2i(12, 9),
 		"target_item": "plate_iron",
 		"target_count": 18,
 		"power": true,
-		"palette": ["belt", "splitter", "shaft", "smelter_iron"],
+		"palette": ["drill", "belt", "splitter", "shaft", "smelter_iron"],
 		"fixed": [
-			{"pos": Vector2i(0, 4), "def": "source", "dir": 0, "item": "ore_iron", "interval": 0.5},
+			{"pos": Vector2i(0, 4), "def": "ore_node", "dir": 0, "item": "ore_iron", "interval": 0.5},
 			{"pos": Vector2i(11, 4), "def": "sink", "dir": 2},
 			{"pos": Vector2i(5, 0), "def": "water_wheel", "capacity": 8.0},
 		],
@@ -103,9 +105,17 @@ static var LIST := [
 		"target_item": "gear",
 		"target_count": 20,
 		"power": true,
-		"palette": ["belt", "splitter", "shaft", "gearbox_up", "smelter_iron", "assembler_gear"],
+		"palette": [
+			"drill",
+			"belt",
+			"splitter",
+			"shaft",
+			"gearbox_up",
+			"smelter_iron",
+			"assembler_gear",
+		],
 		"fixed": [
-			{"pos": Vector2i(0, 5), "def": "source", "dir": 0, "item": "ore_iron", "interval": 0.25},
+			{"pos": Vector2i(0, 5), "def": "ore_node", "dir": 0, "item": "ore_iron", "interval": 0.25},
 			{"pos": Vector2i(12, 5), "def": "sink", "dir": 2},
 			{"pos": Vector2i(4, 0), "def": "water_wheel", "capacity": 8.0},
 			{"pos": Vector2i(8, 0), "def": "water_wheel", "capacity": 8.0},
@@ -122,6 +132,7 @@ static var LIST := [
 		"target_count": 12,
 		"power": true,
 		"palette": [
+			"drill",
 			"belt",
 			"belt_fast",
 			"splitter",
@@ -133,8 +144,8 @@ static var LIST := [
 			"assembler_circuit",
 		],
 		"fixed": [
-			{"pos": Vector2i(0, 2), "def": "source", "dir": 0, "item": "ore_iron", "interval": 0.5},
-			{"pos": Vector2i(0, 7), "def": "source", "dir": 0, "item": "ore_copper", "interval": 0.5},
+			{"pos": Vector2i(0, 2), "def": "ore_node", "dir": 0, "item": "ore_iron", "interval": 0.5},
+			{"pos": Vector2i(0, 7), "def": "ore_node", "dir": 0, "item": "ore_copper", "interval": 0.5},
 			{"pos": Vector2i(13, 5), "def": "sink", "dir": 2},
 			{"pos": Vector2i(6, 0), "def": "water_wheel", "capacity": 6.0},
 			{"pos": Vector2i(7, 0), "def": "water_wheel", "capacity": 6.0},

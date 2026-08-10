@@ -185,6 +185,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.501961, 0.545098, 0.6, 1)
 theme_override_font_sizes/font_size = 12
 text = "左ドラッグ:設置
+鉱脈をクリック:手掘り
 右ドラッグ:撤去
 1〜9:パーツ選択 / R:回転
 Space:稼働開始・一時停止
