@@ -8,6 +8,7 @@ extends RefCounted
 ## 採掘間隔はドリルではなく鉱脈が持つ。鉱脈の豊かさをステージ設計で決められるようにするため。
 ##
 ## par は [金, 銀, 銅] のクリアタイム(秒)。この時間以下ならそのランク。
+## reward はクリア報酬の基準額。ランク倍率を掛けたものが上限で、差額だけが支給される(shop.gd)。
 
 static var LIST := [
 	{
@@ -24,6 +25,7 @@ static var LIST := [
 			{"pos": Vector2i(9, 4), "def": "sink", "dir": 2},
 		],
 		"par": [13.0, 15.5, 20.0],
+		"reward": 100,
 	},
 	{
 		"id": "s2",
@@ -39,6 +41,7 @@ static var LIST := [
 			{"pos": Vector2i(11, 4), "def": "sink", "dir": 2},
 		],
 		"par": [14.0, 17.0, 23.0],
+		"reward": 140,
 	},
 	{
 		"id": "s3",
@@ -54,6 +57,7 @@ static var LIST := [
 			{"pos": Vector2i(11, 5), "def": "sink", "dir": 2},
 		],
 		"par": [19.0, 23.0, 30.0],
+		"reward": 180,
 	},
 	{
 		"id": "s4",
@@ -78,6 +82,7 @@ static var LIST := [
 			{"pos": Vector2i(13, 5), "def": "sink", "dir": 2},
 		],
 		"par": [23.0, 27.5, 35.0],
+		"reward": 220,
 	},
 	{
 		"id": "s5",
@@ -95,6 +100,7 @@ static var LIST := [
 			{"pos": Vector2i(5, 0), "def": "water_wheel", "capacity": 8.0},
 		],
 		"par": [14.0, 17.0, 23.0],
+		"reward": 260,
 	},
 	{
 		"id": "s6",
@@ -121,6 +127,7 @@ static var LIST := [
 			{"pos": Vector2i(8, 0), "def": "water_wheel", "capacity": 8.0},
 		],
 		"par": [18.0, 23.0, 30.0],
+		"reward": 300,
 	},
 	{
 		"id": "s7",
@@ -151,6 +158,7 @@ static var LIST := [
 			{"pos": Vector2i(7, 0), "def": "water_wheel", "capacity": 6.0},
 		],
 		"par": [18.0, 23.0, 30.0],
+		"reward": 340,
 	},
 ]
 

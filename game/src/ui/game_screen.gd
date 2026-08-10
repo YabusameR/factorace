@@ -29,6 +29,7 @@ var _palette_buttons: Array = []
 @onready var _parts_label: Label = %PartsLabel
 @onready var _time_label: Label = %TimeLabel
 @onready var _best_label: Label = %BestLabel
+@onready var _money_label: Label = %MoneyLabel
 @onready var _palette_list: VBoxContainer = %PaletteList
 @onready var _info_label: Label = %InfoLabel
 @onready var _power_label: Label = %PowerLabel
@@ -67,6 +68,7 @@ func _ready() -> void:
 	_power_label.visible = _factory.power_enabled
 	_result_layer.visible = false
 	_refresh_best_label()
+	_refresh_money_label()
 	_update_hud()
 
 
@@ -100,14 +102,25 @@ func _build_palette() -> void:
 		button.focus_mode = Control.FOCUS_NONE
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.clip_text = true
-		button.text = "%d. %s" % [i + 1, def.name]
+		# 未所持の有償パーツは選べない。ショップで買うまでは値札を出しておく。
+		var owned := Shop.is_owned(def_id)
+		button.disabled = not owned
+		if owned:
+			button.text = "%d. %s" % [i + 1, def.name]
+			button.pressed.connect(_select_def.bind(def_id))
+		else:
+			button.text = "%d. %s(%s)" % [
+				i + 1, def.name, SaveData.format_money(Shop.price(def_id))
+			]
 		button.tooltip_text = Defs.building_detail(def_id)
-		button.pressed.connect(_select_def.bind(def_id))
 		_palette_list.add_child(button)
 		_palette_buttons.append(button)
 
-	if not palette.is_empty():
-		_select_def(String(palette[0]))
+	# 最初に選ぶのは、所持しているいちばん上のパーツ。
+	for def_id_raw in palette:
+		if Shop.is_owned(String(def_id_raw)):
+			_select_def(String(def_id_raw))
+			break
 
 
 func _select_def(def_id: String) -> void:
@@ -216,6 +229,15 @@ func _show_result() -> void:
 		)
 	)
 	%ResultParts.text = "使用パーツ %d 個" % _factory.part_count()
+
+	# 報酬の精算。クリア報酬は上のランクに初めて届いたときだけ差額が入る。
+	var payout: Dictionary = Shop.settle(_stage, rank)
+	%ResultReward.text = "報酬 +%s(クリア +%s / 生産 +%s)" % [
+		SaveData.format_money(int(payout.total)),
+		SaveData.format_money(int(payout.clear)),
+		SaveData.format_money(int(payout.production)),
+	]
+	_refresh_money_label()
 	_start_button.text = "稼働開始"
 	_refresh_best_label()
 	_result_layer.visible = true
@@ -223,6 +245,10 @@ func _show_result() -> void:
 
 func _refresh_best_label() -> void:
 	_best_label.text = "ベスト %s" % SaveData.format_time(SaveData.best_time(stage_id))
+
+
+func _refresh_money_label() -> void:
+	_money_label.text = "資金 %s" % SaveData.format_money(SaveData.money())
 
 
 func _update_hud() -> void:
@@ -275,7 +301,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif code >= KEY_1 and code <= KEY_9:
 		var index: int = code - KEY_1
 		var palette: Array = _stage.palette
-		if index >= palette.size():
+		if index >= palette.size() or not Shop.is_owned(String(palette[index])):
 			return
 		_select_def(String(palette[index]))
 	else:

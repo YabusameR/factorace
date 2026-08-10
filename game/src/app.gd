@@ -5,6 +5,7 @@ extends Control
 const TITLE_SCENE := preload("res://scenes/title.tscn")
 const STAGE_SELECT_SCENE := preload("res://scenes/stage_select.tscn")
 const GAME_SCENE := preload("res://scenes/game.tscn")
+const SHOP_SCENE := preload("res://scenes/shop.tscn")
 
 @onready var _host: Control = %ScreenHost
 
@@ -25,7 +26,14 @@ func show_title() -> void:
 func show_stage_select() -> void:
 	var screen := STAGE_SELECT_SCENE.instantiate()
 	screen.stage_selected.connect(show_game)
+	screen.shop_requested.connect(show_shop)
 	screen.back_requested.connect(show_title)
+	_swap(screen)
+
+
+func show_shop() -> void:
+	var screen := SHOP_SCENE.instantiate()
+	screen.back_requested.connect(show_stage_select)
 	_swap(screen)
 
 
