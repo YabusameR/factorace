@@ -28,14 +28,14 @@ const DIR_VECTORS := [
 ]
 const DIR_NAMES := ["右", "下", "左", "上"]
 
-## アイテム定義。short は盤面に描く短い表示名。
+## アイテム定義。short は盤面に描く短い表示名、value は搬出したときの生産報酬(1個あたり)。
 static var ITEMS := {
-	"ore_iron": {"name": "鉄鉱石", "short": "鉄鉱", "color": Color("7d8590")},
-	"ore_copper": {"name": "銅鉱石", "short": "銅鉱", "color": Color("b5713c")},
-	"plate_iron": {"name": "鉄板", "short": "鉄板", "color": Color("c9d1d9")},
-	"plate_copper": {"name": "銅板", "short": "銅板", "color": Color("e08a4a")},
-	"gear": {"name": "歯車", "short": "歯車", "color": Color("8fb8de")},
-	"circuit": {"name": "基板", "short": "基板", "color": Color("6fbf73")},
+	"ore_iron": {"value": 1, "name": "鉄鉱石", "short": "鉄鉱", "color": Color("7d8590")},
+	"ore_copper": {"value": 1, "name": "銅鉱石", "short": "銅鉱", "color": Color("b5713c")},
+	"plate_iron": {"value": 2, "name": "鉄板", "short": "鉄板", "color": Color("c9d1d9")},
+	"plate_copper": {"value": 2, "name": "銅板", "short": "銅板", "color": Color("e08a4a")},
+	"gear": {"value": 4, "name": "歯車", "short": "歯車", "color": Color("8fb8de")},
+	"circuit": {"value": 6, "name": "基板", "short": "基板", "color": Color("6fbf73")},
 }
 
 ## パーツ定義。
@@ -170,7 +170,7 @@ static var BUILDINGS := {
 }
 
 static func item(id: String) -> Dictionary:
-	return ITEMS.get(id, {"name": id, "short": "?", "color": Color.MAGENTA})
+	return ITEMS.get(id, {"name": id, "short": "?", "color": Color.MAGENTA, "value": 1})
 
 
 static func item_name(id: String) -> String:
@@ -183,6 +183,11 @@ static func item_short(id: String) -> String:
 
 static func item_color(id: String) -> Color:
 	return item(id).color
+
+
+## 搬出1個あたりの生産報酬。
+static func item_value(id: String) -> int:
+	return int(item(id).get("value", 1))
 
 
 static func building(id: String) -> Dictionary:

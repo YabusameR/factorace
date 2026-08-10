@@ -1,6 +1,7 @@
 extends Control
 
 signal stage_selected(stage_id: String)
+signal shop_requested
 signal back_requested
 
 const DIM := Color(0.68, 0.72, 0.78)
@@ -8,6 +9,8 @@ const DIM := Color(0.68, 0.72, 0.78)
 
 func _ready() -> void:
 	%BackButton.pressed.connect(func() -> void: back_requested.emit())
+	%ShopButton.pressed.connect(func() -> void: shop_requested.emit())
+	%MoneyLabel.text = "資金 %s" % SaveData.format_money(SaveData.money())
 	_build_list()
 
 

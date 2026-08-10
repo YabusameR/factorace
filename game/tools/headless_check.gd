@@ -209,6 +209,23 @@ const LAYOUTS_POWER := {
 	],
 }
 
+## 何も買っていない状態で組めるレイアウト。有償パーツ(ドリル/分配器/増速機など)を使わない。
+const LAYOUTS_FREE := {
+	"s2":
+	[
+		[Vector2i(1, 4), "belt", 0],
+		[Vector2i(2, 4), "belt", 0],
+		[Vector2i(3, 4), "belt", 0],
+		[Vector2i(4, 4), "belt", 0],
+		[Vector2i(5, 4), "smelter_iron", 0],
+		[Vector2i(6, 4), "belt", 0],
+		[Vector2i(7, 4), "belt", 0],
+		[Vector2i(8, 4), "belt", 0],
+		[Vector2i(9, 4), "belt", 0],
+		[Vector2i(10, 4), "belt", 0],
+	],
+}
+
 ## 詰めたレイアウト。par(特にGOLD)が到達可能かを確かめるために測る。
 const LAYOUTS_TUNED := {
 	"s2":
@@ -351,6 +368,8 @@ func _initialize() -> void:
 		_run_stage(String(stage_id), LAYOUTS_FAST, "高速")
 	print("=== 手掘り(ドリルなし) ===")
 	_run_hand_mining()
+	print("=== 経済 ===")
+	_check_economy()
 
 
 func _process(_delta: float) -> bool:
@@ -450,6 +469,64 @@ func _run_hand_mining() -> void:
 	# ドリルを置いたときのタイムより遅くなければ、ドリルを置く意味がない。
 	if factory.elapsed <= 13.0:
 		_fail("手掘りがドリルと同等以上に速い(%.2f秒)。MANUAL_PENALTY を見直すこと" % factory.elapsed)
+
+
+## 資金まわりの検算。買わなくても詰まないこと、序盤の入りが足りることを見る。
+func _check_economy() -> void:
+	# 1) ショップに並ぶのは便利パーツだけ。必須パーツが有償だと詰む。
+	for def_id in Shop.ORDER:
+		if not Shop.is_purchasable(String(def_id)):
+			_fail("ショップの並びに価格の無いパーツがある: %s" % def_id)
+	for required in ["belt", "shaft", "smelter_iron", "smelter_copper", "assembler_gear", "assembler_circuit"]:
+		if Shop.is_purchasable(required):
+			_fail("必須パーツが有償になっている: %s" % required)
+
+	# 2) 何も買わずに s2 をクリアできるか(手掘り+製錬炉1台)。
+	var stage := Stages.get_stage("s2")
+	var factory := Factory.new()
+	factory.setup(stage)
+	for entry in LAYOUTS_FREE["s2"]:
+		factory.place(entry[0], String(entry[1]), int(entry[2]))
+	factory.running = true
+	while not factory.cleared and factory.elapsed < TIMEOUT_SEC:
+		factory.mine_by_hand(Vector2i(0, 4))
+		factory.advance(Factory.STEP)
+	if not factory.cleared:
+		_fail("無購入では s2 をクリアできない(%d/%d)" % [factory.delivered, factory.target_count])
+	else:
+		print(
+			"s2 無購入クリア  タイム %s  ランク %s"
+			% [
+				SaveData.format_time(factory.elapsed),
+				Stages.rank_label(stage, factory.elapsed)
+			]
+		)
+
+	# 3) 序盤の資金繰り。s1 を素直にクリアした収入でドリルが買えるか。
+	var s1 := Stages.get_stage("s1")
+	var first_clear := (
+		Shop.clear_reward(s1, "クリア") + Shop.production_reward(s1)
+	)
+	print(
+		"s1 初クリアの収入 %s / ドリル %s"
+		% [SaveData.format_money(first_clear), SaveData.format_money(Shop.price("drill"))]
+	)
+	if first_clear < Shop.price("drill"):
+		_fail("s1 を1回クリアしてもドリルが買えない。最初の自動化まで遠すぎる")
+
+	# 4) 全部買うのにいくら要るか / 全ステージGOLDでいくら入るか。
+	var total_cost := 0
+	for def_id in Shop.ORDER:
+		total_cost += Shop.price(String(def_id))
+	var total_income := 0
+	for stage_def in Stages.LIST:
+		total_income += Shop.clear_reward(stage_def, "GOLD") + Shop.production_reward(stage_def)
+	print(
+		"全パーツ %s / 全ステージGOLDの総収入 %s"
+		% [SaveData.format_money(total_cost), SaveData.format_money(total_income)]
+	)
+	if total_income < total_cost:
+		_fail("全ステージGOLDでも全パーツを買えない。価格か報酬を見直すこと")
 
 
 func _spawn_screens() -> void:
